@@ -2,17 +2,14 @@
 # from random import random, uniform
 # import pandas as pd
 # import numpy as np
-# # from tensorflow.keras.models import load_model
 # from keras.models import load_model
 # from sqlalchemy import create_engine
-
 
 # # Credentials to connect to the database
 # username = "root"
 # password = "Sep032020!"
 # hostname = "localhost"
 # dbname = "products"
-
 
 # class Particle:
 #     def __init__(self, position, velocity):
@@ -52,7 +49,6 @@
 #         if self.position > high_bound:
 #             self.position = high_bound
 
-
 # def particle_swarm(number_of_particles, c1, c2, w_min, w_max, iterations, obj_function, steady, cost, model, bounds):
 #     '''
 #         number_of_particles: the population of the particles that try to maximize a function
@@ -71,20 +67,22 @@
 #         position = round(uniform(bounds[0], bounds[1]), 2)
 #         velocity = round(uniform(-0.5, 0.5), 2)
 #         swarm.append(Particle(position, velocity))
-
-
+#     # print(1)
+#     # print(iterations)
 #     for i in range(iterations):
 #         w = w_max - i * ((w_max - w_min) / iterations)
+#         # print(w)
+#         # print(number_of_particles)
 #         for p in range(number_of_particles):
 #             swarm[p].evaluate(obj_function, steady, cost, model)
 #             swarm[p].update_velocity(w, c1, c2)
 #             swarm[p].update_position(bounds)
-
+#             # print(swarm)
+#     # print(2)
 #     best_position = swarm[number_of_particles - 1].gbest_position
 #     best_value = swarm[number_of_particles - 1].gbest_fitness
-
+#     # print(best_position,best_value)
 #     return (best_position, best_value)
-
 
 # def gain(price, steady, cost, model):
 #     temp = np.array(steady)
@@ -94,8 +92,8 @@
 #     result = (price - cost) * quantity
 #     return float(np.round(result, 2))
 
-
 # def optimize_prices():
+#     print("Connecting to the database...")
 #     # Connect to the database of the e-shop
 #     engine = create_engine("mysql+mysqlconnector://{user}:{password}@{host}/{dbname}"
 #                            .format(user=username,
@@ -103,20 +101,23 @@
 #                                    host=hostname,
 #                                    dbname=dbname))
 
+#     print("Reading data from the database...")
 #     data = pd.read_sql_table("pso_data", engine)
 #     opt_data = pd.read_sql_table("data_for_optimization", engine)
 
+#     print("Encoding product IDs...")
 #     product_encoder = nn.nn_final_training()
 #     data["product_id"] = product_encoder.transform(data["product_id"])
 #     model = load_model("final_model.h5")
 
+#     print("Starting optimization process...")
 #     columns = ["product_id", "low_bound", "high_bound",
 #                "optimized_price", "predicted_quantity",
 #                "predicted_gain", "arxikiTimi", "telikiTimi"]
 #     optimization_results = pd.DataFrame(columns=columns)
 
 #     for index, row in data.iterrows():
-#         # print(index)
+#         print(f"Optimizing product ID: {row['product_id']}...")
 #         upper_bound = row.product_max_bound
 #         lower_bound = row.product_min_bound
 #         steady = row[2:-1]
@@ -131,6 +132,8 @@
 #         best_position, best_value = particle_swarm(number_of_swarms, c1, c2,
 #                                                    w_min, w_max, 400, gain,
 #                                                    steady, cost, model, bounds)
+#         print(f"Optimization result for product ID {row['product_id']}: {best_position}, {best_value}")
+
 #         temp = np.array(steady)
 #         temp = np.append(temp, best_position)
 #         temp = np.reshape(temp, (1, len(temp)))
@@ -144,7 +147,9 @@
 #         optimization_results.loc[index, "predicted_gain"] = round(best_value, 2)
 
 #     optimization_results["product_id"] = product_encoder.inverse_transform(data["product_id"])
+#     print("Writing optimization results to the database...")
 #     optimization_results.to_sql(name="optimization_results", con=engine, index=False, if_exists="replace", chunksize=1)
+#     print("Optimization process complete.")
 #     for index, row in optimization_results.iterrows():
 #         arxikiTimi = opt_data.loc[opt_data["product_id"] == row["product_id"]].arxikiTimi.values
 #         arxikiTimi = round(float(arxikiTimi), 2)
@@ -154,19 +159,23 @@
 #         optimization_results.loc[index, "telikiTimi"] = telikiTimi
 
 #     optimization_results.to_sql(name="optimization_results", con=engine, index=False, if_exists="replace", chunksize=1)
+#     print("Optimization process complete.")
 
 import neural_network as nn
 from random import random, uniform
 import pandas as pd
 import numpy as np
+# from tensorflow.keras.models import load_model
 from keras.models import load_model
 from sqlalchemy import create_engine
+
 
 # Credentials to connect to the database
 username = "root"
 password = "Sep032020!"
 hostname = "localhost"
 dbname = "products"
+
 
 class Particle:
     def __init__(self, position, velocity):
@@ -206,6 +215,7 @@ class Particle:
         if self.position > high_bound:
             self.position = high_bound
 
+
 def particle_swarm(number_of_particles, c1, c2, w_min, w_max, iterations, obj_function, steady, cost, model, bounds):
     '''
         number_of_particles: the population of the particles that try to maximize a function
@@ -224,22 +234,20 @@ def particle_swarm(number_of_particles, c1, c2, w_min, w_max, iterations, obj_fu
         position = round(uniform(bounds[0], bounds[1]), 2)
         velocity = round(uniform(-0.5, 0.5), 2)
         swarm.append(Particle(position, velocity))
-    # print(1)
-    # print(iterations)
+
+
     for i in range(iterations):
         w = w_max - i * ((w_max - w_min) / iterations)
-        # print(w)
-        # print(number_of_particles)
         for p in range(number_of_particles):
             swarm[p].evaluate(obj_function, steady, cost, model)
             swarm[p].update_velocity(w, c1, c2)
             swarm[p].update_position(bounds)
-            # print(swarm)
-    # print(2)
+
     best_position = swarm[number_of_particles - 1].gbest_position
     best_value = swarm[number_of_particles - 1].gbest_fitness
-    # print(best_position,best_value)
+
     return (best_position, best_value)
+
 
 def gain(price, steady, cost, model):
     temp = np.array(steady)
@@ -249,72 +257,67 @@ def gain(price, steady, cost, model):
     result = (price - cost) * quantity
     return float(np.round(result, 2))
 
-# def optimize_prices():
-#     print("Connecting to the database...")
-#     # Connect to the database of the e-shop
-#     engine = create_engine("mysql+mysqlconnector://{user}:{password}@{host}/{dbname}"
-#                            .format(user=username,
-#                                    password=password,
-#                                    host=hostname,
-#                                    dbname=dbname))
 
-#     print("Reading data from the database...")
-#     data = pd.read_sql_table("pso_data", engine)
-#     opt_data = pd.read_sql_table("data_for_optimization", engine)
+def optimize_prices():
+    # Connect to the database of the e-shop
+    engine = create_engine("mysql+mysqlconnector://{user}:{password}@{host}/{dbname}"
+                           .format(user=username,
+                                   password=password,
+                                   host=hostname,
+                                   dbname=dbname))
 
-#     print("Encoding product IDs...")
-#     product_encoder = nn.nn_final_training()
-#     data["product_id"] = product_encoder.transform(data["product_id"])
-#     model = load_model("final_model.h5")
+    data = pd.read_sql_table("pso_data", engine)
+    opt_data = pd.read_sql_table("data_for_optimization", engine)
 
-#     print("Starting optimization process...")
-#     columns = ["product_id", "low_bound", "high_bound",
-#                "optimized_price", "predicted_quantity",
-#                "predicted_gain", "arxikiTimi", "telikiTimi"]
-#     optimization_results = pd.DataFrame(columns=columns)
+    product_encoder = nn.nn_final_training()
+    data["product_id"] = product_encoder.transform(data["product_id"])
+    model = load_model("final_model.h5")
 
-#     for index, row in data.iterrows():
-#         # print(index)
-#         print(f"Optimizing product ID: {row['product_id']}...")
-#         upper_bound = row.product_max_bound
-#         lower_bound = row.product_min_bound
-#         steady = row[2:-1]
-#         cost = row.product_cost
-#         bounds = (lower_bound, upper_bound)
-#         number_of_swarms = 40
-#         c1 = 0.4
-#         c2 = c1
-#         w_min = 0.6
-#         w_max = 0.8
+    columns = ["product_id", "low_bound", "high_bound",
+               "optimized_price", "predicted_quantity",
+               "predicted_gain", "arxikiTimi", "telikiTimi"]
+    optimization_results = pd.DataFrame(columns=columns)
 
-#         best_position, best_value = particle_swarm(number_of_swarms, c1, c2,
-#                                                    w_min, w_max, 400, gain,
-#                                                    steady, cost, model, bounds)
-#         temp = np.array(steady)
-#         temp = np.append(temp, best_position)
-#         temp = np.reshape(temp, (1, len(temp)))
-#         predicted_quantity = int(np.round(model.predict(temp)))
+    for index, row in data.iterrows():
+        # print(index)
+        upper_bound = row.product_max_bound
+        lower_bound = row.product_min_bound
+        steady = row[2:-1]
+        cost = row.product_cost
+        bounds = (lower_bound, upper_bound)
+        number_of_swarms = 40
+        c1 = 0.4
+        c2 = c1
+        w_min = 0.6
+        w_max = 0.8
 
-#         optimization_results.loc[index, "product_id"] = row["product_id"]
-#         optimization_results.loc[index, "low_bound"] = float(bounds[0])
-#         optimization_results.loc[index, "high_bound"] = float(bounds[1])
-#         optimization_results.loc[index, "optimized_price"] = float(round(best_position, 2))
-#         optimization_results.loc[index, "predicted_quantity"] = predicted_quantity
-#         optimization_results.loc[index, "predicted_gain"] = round(best_value, 2)
+        best_position, best_value = particle_swarm(number_of_swarms, c1, c2,
+                                                   w_min, w_max, 400, gain,
+                                                   steady, cost, model, bounds)
+        temp = np.array(steady)
+        temp = np.append(temp, best_position)
+        temp = np.reshape(temp, (1, len(temp)))
+        predicted_quantity = int(np.round(model.predict(temp)))
 
-#     optimization_results["product_id"] = product_encoder.inverse_transform(data["product_id"])
-#     print("Writing optimization results to the database...")
-#     optimization_results.to_sql(name="optimization_results", con=engine, index=False, if_exists="replace", chunksize=1)
-#     print("Optimization process complete.")
-#     for index, row in optimization_results.iterrows():
-#         arxikiTimi = opt_data.loc[opt_data["product_id"] == row["product_id"]].arxikiTimi.values
-#         arxikiTimi = round(float(arxikiTimi), 2)
-#         telikiTimi = opt_data.loc[opt_data["product_id"] == row["product_id"]].telikiTimi.values
-#         telikiTimi = round(float(telikiTimi), 2)
-#         optimization_results.loc[index, "arxikiTimi"] = arxikiTimi
-#         optimization_results.loc[index, "telikiTimi"] = telikiTimi
+        optimization_results.loc[index, "product_id"] = row["product_id"]
+        optimization_results.loc[index, "low_bound"] = float(bounds[0])
+        optimization_results.loc[index, "high_bound"] = float(bounds[1])
+        optimization_results.loc[index, "optimized_price"] = float(round(best_position, 2))
+        optimization_results.loc[index, "predicted_quantity"] = predicted_quantity
+        optimization_results.loc[index, "predicted_gain"] = round(best_value, 2)
 
-#     optimization_results.to_sql(name="optimization_results", con=engine, index=False, if_exists="replace", chunksize=1)
+    optimization_results["product_id"] = product_encoder.inverse_transform(data["product_id"])
+    optimization_results.to_sql(name="optimization_results", con=engine, index=False, if_exists="replace", chunksize=1)
+    for index, row in optimization_results.iterrows():
+        arxikiTimi = opt_data.loc[opt_data["product_id"] == row["product_id"]].arxikiTimi.values
+        arxikiTimi = round(float(arxikiTimi), 2)
+        telikiTimi = opt_data.loc[opt_data["product_id"] == row["product_id"]].telikiTimi.values
+        telikiTimi = round(float(telikiTimi), 2)
+        optimization_results.loc[index, "arxikiTimi"] = arxikiTimi
+        optimization_results.loc[index, "telikiTimi"] = telikiTimi
+
+    optimization_results.to_sql(name="optimization_results", con=engine, index=False, if_exists="replace", chunksize=1)
+
 
 def optimize_prices():
     print("Connecting to the database...")
@@ -341,6 +344,7 @@ def optimize_prices():
     optimization_results = pd.DataFrame(columns=columns)
 
     for index, row in data.iterrows():
+        # print(index)
         print(f"Optimizing product ID: {row['product_id']}...")
         upper_bound = row.product_max_bound
         lower_bound = row.product_min_bound
@@ -356,25 +360,7 @@ def optimize_prices():
         best_position, best_value = particle_swarm(number_of_swarms, c1, c2,
                                                    w_min, w_max, 400, gain,
                                                    steady, cost, model, bounds)
-        print(f"Optimization result for product ID {row['product_id']}: {best_position}, {best_value}")
-
-    #     temp = np.array(steady)
-    #     temp = np.append(temp, best_position)
-    #     temp = np.reshape(temp, (1, len(temp)))
-    #     predicted_quantity = int(np.round(model.predict(temp)))
-
-    #     optimization_results.loc[index, "product_id"] = row["product_id"]
-    #     optimization_results.loc[index, "low_bound"] = float(bounds[0])
-    #     optimization_results.loc[index, "high_bound"] = float(bounds[1])
-    #     optimization_results.loc[index, "optimized_price"] = float(round(best_position, 2))
-    #     optimization_results.loc[index, "predicted_quantity"] = predicted_quantity
-    #     optimization_results.loc[index, "predicted_gain"] = round(best_value, 2)
-
-    # optimization_results["product_id"] = product_encoder.inverse_transform(data["product_id"])
-    # print("Writing optimization results to the database...")
-    # optimization_results.to_sql(name="optimization_results", con=engine, index=False, if_exists="replace", chunksize=1)
-    # print("Optimization process complete.")
-
+        
         temp = np.array(steady)
         temp = np.append(temp, best_position)
         temp = np.reshape(temp, (1, len(temp)))
@@ -400,4 +386,62 @@ def optimize_prices():
         optimization_results.loc[index, "telikiTimi"] = telikiTimi
 
     optimization_results.to_sql(name="optimization_results", con=engine, index=False, if_exists="replace", chunksize=1)
-    print("Optimization process complete.")
+
+# def optimize_prices():
+#     print("Connecting to the database...")
+#     # Connect to the database of the e-shop
+#     engine = create_engine("mysql+mysqlconnector://{user}:{password}@{host}/{dbname}"
+#                            .format(user=username,
+#                                    password=password,
+#                                    host=hostname,
+#                                    dbname=dbname))
+
+#     print("Reading data from the database...")
+#     data = pd.read_sql_table("pso_data", engine)
+#     opt_data = pd.read_sql_table("data_for_optimization", engine)
+
+#     print("Encoding product IDs...")
+#     product_encoder = nn.nn_final_training()
+#     data["product_id"] = product_encoder.transform(data["product_id"])
+#     model = load_model("final_model.h5")
+
+#     print("Starting optimization process...")
+#     columns = ["product_id", "low_bound", "high_bound",
+#                "optimized_price", "predicted_quantity",
+#                "predicted_gain", "arxikiTimi", "telikiTimi"]
+#     optimization_results = pd.DataFrame(columns=columns)
+
+#     for index, row in data.iterrows():
+#         print(f"Optimizing product ID: {row['product_id']}...")
+#         upper_bound = row.product_max_bound
+#         lower_bound = row.product_min_bound
+#         steady = row[2:-1]
+#         cost = row.product_cost
+#         bounds = (lower_bound, upper_bound)
+#         number_of_swarms = 40
+#         c1 = 0.4
+#         c2 = c1
+#         w_min = 0.6
+#         w_max = 0.8
+
+#         best_position, best_value = particle_swarm(number_of_swarms, c1, c2,
+#                                                    w_min, w_max, 400, gain,
+#                                                    steady, cost, model, bounds)
+#         print(f"Optimization result for product ID {row['product_id']}: {best_position}, {best_value}")
+
+#         temp = np.array(steady)
+#         temp = np.append(temp, best_position)
+#         temp = np.reshape(temp, (1, len(temp)))
+#         predicted_quantity = int(np.round(model.predict(temp)))
+
+#         optimization_results.loc[index, "product_id"] = row["product_id"]
+#         optimization_results.loc[index, "low_bound"] = float(bounds[0])
+#         optimization_results.loc[index, "high_bound"] = float(bounds[1])
+#         optimization_results.loc[index, "optimized_price"] = float(round(best_position, 2))
+#         optimization_results.loc[index, "predicted_quantity"] = predicted_quantity
+#         optimization_results.loc[index, "predicted_gain"] = round(best_value, 2)
+
+#     optimization_results["product_id"] = product_encoder.inverse_transform(data["product_id"])
+#     print("Writing optimization results to the database...")
+#     optimization_results.to_sql(name="optimization_results", con=engine, index=False, if_exists="replace", chunksize=1)
+#     print("Optimization process complete.")
